@@ -44,6 +44,7 @@ import {
   wrapToolParamNormalization,
 } from "./pi-tools.read.js";
 import { cleanToolSchemaForGemini, normalizeToolParameters } from "./pi-tools.schema.js";
+import { getSubagentDepthFromSessionStore } from "./subagent-depth.js";
 import {
   applyToolPolicyPipeline,
   buildDefaultToolPolicyPipelineSteps,
@@ -236,7 +237,10 @@ export function createOpenClawCodingTools(options?: {
     options?.exec?.scopeKey ?? options?.sessionKey ?? (agentId ? `agent:${agentId}` : undefined);
   const subagentPolicy =
     isSubagentSessionKey(options?.sessionKey) && options?.sessionKey
-      ? resolveSubagentToolPolicy(options.config)
+      ? resolveSubagentToolPolicy(
+          options.config,
+          getSubagentDepthFromSessionStore(options.sessionKey, { cfg: options.config }),
+        )
       : undefined;
   const allowBackground = isToolAllowedByPolicies("process", [
     profilePolicyWithAlsoAllow,
@@ -276,12 +280,11 @@ export function createOpenClawCodingTools(options?: {
   const base = (codingTools as unknown as AnyAgentTool[]).flatMap((tool) => {
     if (tool.name === readTool.name) {
       if (sandboxRoot) {
-        return [
-          createSandboxedReadTool({
-            root: sandboxRoot,
-            bridge: sandboxFsBridge!,
-          }),
-        ];
+        const sandboxed = createSandboxedReadTool({
+          root: sandboxRoot,
+          bridge: sandboxFsBridge!,
+        });
+        return [workspaceOnly ? wrapToolWorkspaceRootGuard(sandboxed, sandboxRoot) : sandboxed];
       }
       const freshReadTool = createReadTool(workspaceRoot);
       const wrapped = createOpenClawReadTool(freshReadTool);
@@ -365,8 +368,18 @@ export function createOpenClawCodingTools(options?: {
     ...(sandboxRoot
       ? allowWorkspaceWrites
         ? [
-            createSandboxedEditTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
-            createSandboxedWriteTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
+            workspaceOnly
+              ? wrapToolWorkspaceRootGuard(
+                  createSandboxedEditTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
+                  sandboxRoot,
+                )
+              : createSandboxedEditTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
+            workspaceOnly
+              ? wrapToolWorkspaceRootGuard(
+                  createSandboxedWriteTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
+                  sandboxRoot,
+                )
+              : createSandboxedWriteTool({ root: sandboxRoot, bridge: sandboxFsBridge! }),
           ]
         : []
       : []),
