@@ -1,30 +1,16 @@
-import type { ChannelPlugin, OpenClawPluginApi, PluginLogger } from "../../src/plugin-sdk/index.js";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
+import { imessagePlugin } from "./src/channel.js";
+import { setIMessageRuntime } from "./src/runtime.js";
 
-/**
- * iMessage channel plugin.
- *
- * Phase 4 of plugin-sdk refactor: moves iMessage from direct core imports
- * to the SDK + Runtime API surface.
- *
- * Config keys, CLI behavior, and documentation remain unchanged.
- */
-
-let logger: PluginLogger | undefined;
-
-const plugin: ChannelPlugin = {
+const plugin = {
   id: "imessage",
   name: "iMessage",
-  version: "0.1.0",
-  channel: "imessage",
-
-  async onLoad(api: OpenClawPluginApi) {
-    logger = api.runtime?.logging?.getChildLogger("imessage");
-    logger?.info?.("iMessage plugin loaded (scaffold — Phase 4)");
-  },
-
-  async onUnload() {
-    logger?.info?.("iMessage plugin unloaded");
-    logger = undefined;
+  description: "iMessage channel plugin",
+  configSchema: emptyPluginConfigSchema(),
+  register(api: OpenClawPluginApi) {
+    setIMessageRuntime(api.runtime);
+    api.registerChannel({ plugin: imessagePlugin });
   },
 };
 
