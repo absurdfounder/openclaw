@@ -12,3 +12,15 @@ export async function loadGatewayTlsRuntime(
 ): Promise<GatewayTlsRuntime> {
   return await loadGatewayTlsRuntimeConfig(cfg, log);
 }
+
+export function shouldRejectNonTlsConnection(params: {
+  tlsEnabled: boolean;
+  tlsRequired: boolean;
+  remoteAddr?: string;
+}): boolean {
+  if (!params.tlsEnabled || !params.tlsRequired) return false;
+  // Allow loopback connections without TLS
+  const addr = params.remoteAddr ?? "";
+  if (addr === "127.0.0.1" || addr === "::1" || addr === "::ffff:127.0.0.1" || addr === "localhost") return false;
+  return true;
+}

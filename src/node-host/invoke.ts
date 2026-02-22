@@ -794,6 +794,17 @@ export async function handleInvoke(
     execArgv = segments[0].argv;
   }
 
+  await sendNodeEvent(
+    client,
+    "exec.started",
+    buildExecEventPayload({
+      sessionKey,
+      runId,
+      host: "node",
+      command: cmdText,
+    }),
+  );
+
   const result = await runCommand(
     execArgv,
     params.cwd?.trim() || undefined,
