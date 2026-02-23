@@ -210,7 +210,10 @@ export function registerBrowserAgentSnapshotRoutes(
     const frameSelectorValue = frameSelector.trim() || undefined;
 
     try {
-      const tab = await profileCtx.ensureTabAvailable(targetId || undefined);
+      if (req.signal?.aborted) {
+        throw new Error("aborted");
+      }
+      const tab = await profileCtx.ensureTabAvailable(targetId || undefined, req.signal);
       if ((labels || mode === "efficient") && format === "aria") {
         return jsonError(res, 400, "labels/mode=efficient require format=ai");
       }

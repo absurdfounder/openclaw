@@ -47,7 +47,7 @@ export async function browserPdfSave(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ targetId: opts.targetId }),
-    timeoutMs: 20000,
+    timeoutMs: 30000,
   });
 }
 

@@ -103,7 +103,13 @@ export async function withRouteTabContext<T>(
     return undefined;
   }
   try {
-    const tab = await profileCtx.ensureTabAvailable(params.targetId);
+    if (params.req.signal?.aborted) {
+      throw new Error("aborted");
+    }
+    const tab = await profileCtx.ensureTabAvailable(params.targetId, params.req.signal);
+    if (params.req.signal?.aborted) {
+      throw new Error("aborted");
+    }
     return await params.run({
       profileCtx,
       tab,

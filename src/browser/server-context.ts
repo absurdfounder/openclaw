@@ -273,7 +273,7 @@ function createProfileContext(
     });
   };
 
-  const ensureBrowserAvailable = async (): Promise<void> => {
+  const ensureBrowserAvailable = async (signal?: AbortSignal): Promise<void> => {
     const current = state();
     const remoteCdp = !profile.cdpIsLoopback;
     const isExtension = profile.driver === "extension";
@@ -321,7 +321,7 @@ function createProfileContext(
             : `Browser attachOnly is enabled and profile "${profile.name}" is not running.`,
         );
       }
-      const launched = await launchOpenClawChrome(current.resolved, profile);
+      const launched = await launchOpenClawChrome(current.resolved, profile, { signal });
       attachRunning(launched);
       return;
     }
@@ -357,7 +357,7 @@ function createProfileContext(
     await stopOpenClawChrome(profileState.running);
     setProfileRunning(null);
 
-    const relaunched = await launchOpenClawChrome(current.resolved, profile);
+    const relaunched = await launchOpenClawChrome(current.resolved, profile, { signal });
     attachRunning(relaunched);
 
     if (!(await isReachable(600))) {
@@ -367,8 +367,8 @@ function createProfileContext(
     }
   };
 
-  const ensureTabAvailable = async (targetId?: string): Promise<BrowserTab> => {
-    await ensureBrowserAvailable();
+  const ensureTabAvailable = async (targetId?: string, signal?: AbortSignal): Promise<BrowserTab> => {
+    await ensureBrowserAvailable(signal);
     const profileState = getProfileState();
     const tabs1 = await listTabs();
     if (tabs1.length === 0) {
@@ -672,8 +672,8 @@ export function createBrowserRouteContext(opts: ContextOptions): BrowserRouteCon
     forProfile,
     listProfiles,
     // Legacy methods delegate to default profile
-    ensureBrowserAvailable: () => getDefaultContext().ensureBrowserAvailable(),
-    ensureTabAvailable: (targetId) => getDefaultContext().ensureTabAvailable(targetId),
+    ensureBrowserAvailable: (signal) => getDefaultContext().ensureBrowserAvailable(signal),
+    ensureTabAvailable: (targetId, signal) => getDefaultContext().ensureTabAvailable(targetId, signal),
     isHttpReachable: (timeoutMs) => getDefaultContext().isHttpReachable(timeoutMs),
     isReachable: (timeoutMs) => getDefaultContext().isReachable(timeoutMs),
     listTabs: () => getDefaultContext().listTabs(),

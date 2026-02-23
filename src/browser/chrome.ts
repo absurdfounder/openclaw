@@ -163,6 +163,7 @@ export async function isChromeCdpReady(
 export async function launchOpenClawChrome(
   resolved: ResolvedBrowserConfig,
   profile: ResolvedBrowserProfile,
+  opts?: { signal?: AbortSignal },
 ): Promise<RunningChrome> {
   if (!profile.cdpIsLoopback) {
     throw new Error(`Profile "${profile.name}" is remote; cannot launch local Chrome.`);
@@ -247,6 +248,14 @@ export async function launchOpenClawChrome(
     const bootstrap = spawnOnce();
     const deadline = Date.now() + 10_000;
     while (Date.now() < deadline) {
+      if (opts?.signal?.aborted) {
+        try {
+          bootstrap.kill("SIGTERM");
+        } catch {
+          // ignore
+        }
+        throw new Error("Chrome launch aborted");
+      }
       if (exists(localStatePath) && exists(preferencesPath)) {
         break;
       }
@@ -288,6 +297,14 @@ export async function launchOpenClawChrome(
   // Wait for CDP to come up.
   const readyDeadline = Date.now() + 15_000;
   while (Date.now() < readyDeadline) {
+    if (opts?.signal?.aborted) {
+      try {
+        proc.kill("SIGKILL");
+      } catch {
+        // ignore
+      }
+      throw new Error("Chrome launch aborted");
+    }
     if (await isChromeReachable(profile.cdpUrl, 500)) {
       break;
     }

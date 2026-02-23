@@ -16,6 +16,9 @@ async function withBasicProfileRoute(params: {
     return;
   }
   try {
+    if (params.req.signal?.aborted) {
+      throw new Error("aborted");
+    }
     await params.run(profileCtx);
   } catch (err) {
     jsonError(params.res, 500, String(err));
@@ -97,7 +100,7 @@ export function registerBrowserBasicRoutes(app: BrowserRouteRegistrar, ctx: Brow
       res,
       ctx,
       run: async (profileCtx) => {
-        await profileCtx.ensureBrowserAvailable();
+        await profileCtx.ensureBrowserAvailable(req.signal);
         res.json({ ok: true, profile: profileCtx.profile.name });
       },
     });
