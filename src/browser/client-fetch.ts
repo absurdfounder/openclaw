@@ -159,7 +159,16 @@ export async function fetchBrowserJson<T>(
   url: string,
   init?: RequestInit & { timeoutMs?: number },
 ): Promise<T> {
-  const timeoutMs = init?.timeoutMs ?? 5000;
+  // Allow config to raise the per-action timeout (e.g. for remote CDP with higher latency).
+  let timeoutMs = init?.timeoutMs ?? 5000;
+  try {
+    const configActionTimeout = loadConfig()?.browser?.actionTimeoutMs;
+    if (configActionTimeout && configActionTimeout > timeoutMs) {
+      timeoutMs = configActionTimeout;
+    }
+  } catch {
+    // ignore config read failures
+  }
   try {
     if (isAbsoluteHttp(url)) {
       const httpInit = withLoopbackBrowserAuth(url, init);
