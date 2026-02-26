@@ -121,6 +121,22 @@ export async function resolveGatewayRuntimeConfig(params: {
     );
   }
 
+  const controlUiAllowedOrigins = params.cfg.gateway?.controlUi?.allowedOrigins ?? [];
+  const controlUiHostFallback =
+    params.cfg.gateway?.controlUi?.dangerouslyAllowHostHeaderOriginFallback === true;
+  if (
+    controlUiEnabled &&
+    !isLoopbackHost(bindHost) &&
+    controlUiAllowedOrigins.length === 0 &&
+    !controlUiHostFallback
+  ) {
+    throw new Error(
+      "non-loopback Control UI requires gateway.controlUi.allowedOrigins (set explicit origins), " +
+        "or set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback=true " +
+        "to use Host-header origin fallback mode",
+    );
+  }
+
   if (authMode === "trusted-proxy") {
     if (trustedProxies.length === 0) {
       throw new Error(

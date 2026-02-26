@@ -422,6 +422,7 @@ export const OpenClawSchema = z
             allowedOrigins: z.array(z.string()).optional(),
             allowInsecureAuth: z.boolean().optional(),
             dangerouslyDisableDeviceAuth: z.boolean().optional(),
+            dangerouslyAllowHostHeaderOriginFallback: z.boolean().optional(),
           })
           .strict()
           .optional(),

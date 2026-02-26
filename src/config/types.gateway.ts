@@ -78,6 +78,13 @@ export type GatewayControlUiConfig = {
   allowInsecureAuth?: boolean;
   /** DANGEROUS: Disable device identity checks for the Control UI (default: false). */
   dangerouslyDisableDeviceAuth?: boolean;
+  /**
+   * DANGEROUS: Allow the gateway to use the Host header as origin fallback
+   * when no explicit allowedOrigins are configured and the bind is non-loopback.
+   * This is useful in Docker / reverse-proxy setups where the exact origin
+   * cannot be predicted ahead of time.
+   */
+  dangerouslyAllowHostHeaderOriginFallback?: boolean;
 };
 
 export type GatewayAuthMode = "none" | "token" | "password" | "trusted-proxy";
